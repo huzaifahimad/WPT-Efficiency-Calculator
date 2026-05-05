@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WPT Efficiency Calculator — Wireless Power Transfer for EV Charging</title>
+  <meta name="description" content="Calculate wireless power transfer efficiency for EV charging coil systems. Input coil parameters and get instant coupling coefficient, efficiency, and power loss estimates based on WPT physics.">
+  <meta name="keywords" content="WPT, wireless power transfer, efficiency calculator, EV charging, coupling coefficient, coil design">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Google Analytics — Replace GA_MEASUREMENT_ID with your ID -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'GA_MEASUREMENT_ID');
+  </script>
+</head>
+<body>
+
+  <!-- ==================== NAVIGATION ==================== -->
+  <nav class="nav" id="main-nav">
+    <a href="#" class="nav-logo" onclick="navigate('landing');return false">
+      ⚡ WPT <span>Efficiency</span>
+    </a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#landing" data-page="landing" class="active" id="nav-landing">Home</a></li>
+      <li><a href="#calculator" data-page="calculator" id="nav-calculator">Calculator</a></li>
+      <li><a href="#about" data-page="about" id="nav-about">About</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger" aria-label="Toggle navigation menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ==================== LANDING PAGE ==================== -->
+  <section id="page-landing" class="page active">
+    <div class="hero">
+      <div class="hero-badge">⚡ Open-Source Engineering Tool</div>
+      <h1 class="hero-title">
+        Wireless Power Transfer<br>
+        <span class="gradient">Efficiency Calculator</span>
+      </h1>
+      <p class="hero-desc">
+        Input your coil parameters and instantly calculate coupling coefficient, 
+        system efficiency, and power loss for resonant inductive WPT systems 
+        used in EV charging applications.
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" id="btn-launch" onclick="navigate('calculator')">
+          Launch Calculator
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <a class="btn btn-secondary" href="https://doi.org/10.1126/science.1143254" target="_blank" rel="noopener" id="btn-paper-hero">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 1h8a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V2a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View Research Paper
+        </a>
+      </div>
+    </div>
+
+    <div class="features-section">
+      <h2>Designed for Engineers</h2>
+      <p class="subtitle">Fast, accurate, and grounded in published WPT research</p>
+      <div class="features-grid">
+        <div class="feature-card" id="feature-instant">
+          <div class="feature-icon">⚙️</div>
+          <h3>Real-Time Computation</h3>
+          <p>Adjust coil radius, turns, air gap, and frequency — results update instantly using validated electromagnetic models.</p>
+        </div>
+        <div class="feature-card" id="feature-physics">
+          <div class="feature-icon">📐</div>
+          <h3>Physics-Based Models</h3>
+          <p>Calculations use Neumann mutual inductance, Wheeler self-inductance, and coupled resonator efficiency formulas from published literature.</p>
+        </div>
+        <div class="feature-card" id="feature-compare">
+          <div class="feature-icon">📊</div>
+          <h3>Compare Configurations</h3>
+          <p>Toggle comparison mode to evaluate two coil configurations side-by-side and see efficiency deltas at a glance.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>© 2025 WPT Efficiency Calculator — Built for the research community</p>
+    </footer>
+  </section>
+
+  <!-- ==================== CALCULATOR PAGE ==================== -->
+  <section id="page-calculator" class="page">
+    <div class="calc-layout">
+      <!-- Input Panel -->
+      <div class="calc-panel" id="input-panel">
+        <div class="calc-panel-title">
+          <span class="icon">⚙️</span> Coil Parameters
+        </div>
+
+        <!-- Comparison mode tabs (hidden by default) -->
+        <div class="config-tabs" id="config-tabs" style="display:none">
+          <button class="config-tab active" data-config="A" id="tab-config-a" onclick="switchConfig('A')">Config A</button>
+          <button class="config-tab" data-config="B" id="tab-config-b" onclick="switchConfig('B')">Config B</button>
+        </div>
+
+        <!-- Config A Inputs -->
+        <div class="config-inputs active" id="inputs-A">
+          <div class="input-group">
+            <div class="input-label">
+              <span>Coil Radius</span>
+              <span class="unit">cm</span>
+            </div>
+            <div class="input-row">
+              <input type="range" min="1" max="50" step="0.5" value="15" id="radius-A" oninput="syncInput(this,'radius-num-A')">
+              <input type="number" class="input-number" min="1" max="50" step="0.5" value="15" id="radius-num-A" oninput="syncInput(this,'radius-A')">
+            </div>
+          </div>
+          <div class="input-group">
+            <div class="input-label">
+              <span>Number of Turns</span>
+              <span class="unit">turns</span>
+            </div>
+            <div class="input-row">
+              <input type="range" min="1" max="100" step="1" value="20" id="turns-A" oninput="syncInput(this,'turns-num-A')">
+              <input type="number" class="input-number" min="1" max="100" step="1" value="20" id="turns-num-A" oninput="syncInput(this,'turns-A')">
+            </div>
+          </div>
+          <div class="input-group">
+            <div class="input-label">
+              <span>Air Gap Distance</span>
+              <span class="unit">cm</span>
+            </div>
+            <div class="input-row">
+              <input type="range" min="1" max="100" step="0.5" value="10" id="gap-A" oninput="syncInput(this,'gap-num-A')">
+              <input type="number" class="input-number" min="1" max="100" step="0.5" value="10" id="gap-num-A" oninput="syncInput(this,'gap-A')">
+            </div>
+          </div>
+          <div class="input-group">
+            <div class="input-label">
+              <span>Operating Frequency</span>
+              <span class="unit">kHz</span>
+            </div>
+            <div class="input-row">
+              <input type="range" min="1" max="1000" step="1" value="85" id="freq-A" oninput="syncInput(this,'freq-num-A')">
+              <input type="number" class="input-number" min="1" max="1000" step="1" value="85" id="freq-num-A" oninput="syncInput(this,'freq-A')">
+            </div>
+          </div>
+          <div class="input-group">
+            <div class="input-label">
+              <span>Input Power</span>
+              <span class="unit">W</span>
+            </div>
+            <div class="input-row">
+              <input type="range" min="1" max="10000" step="10" value="1000" id="power-A" oninput="syncInput(this,'power-num-A')">
+              <input type="number" class="input-number" min="1" max="10000" step="1" value="1000" id="power-num-A" oninput="syncInput(this,'power-A')">
+            </div>
+          </div>
+        </div>
+
+        <!-- Config B Inputs (hidden by default) -->
+        <div class="config-inputs" id="inputs-B">
+          <div class="input-group">
+            <div class="input-label">
+              <span>Coil Radius</span>
+              <span class="unit">cm</span>
+            </div>
+            <div class="input-row">
+              <input type="range" min="1" max="50" step="0.5" value="20" id="radius-B" oninput="syncInput(this,'radius-num-B')">
+              <input type="number" class="input-number" min="1" max="50" step="0.5" value="20" id="radius-num-B" oninput="syncInput(this,'radius-B')">
+            </div>
+          </div>
+          <div class="input-group">
+            <div class="input-label">
+              <span>Number of Turns</span>
+              <span class="unit">turns</span>
+            </div>
+            <div class="input-row">
+              <input type="range" min="1" max="100" step="1" value="25" id="turns-B" oninput="syncInput(this,'turns-num-B')">
+              <input type="number" class="input-number" min="1" max="100" step="1" value="25" id="turns-num-B" oninput="syncInput(this,'turns-B')">
+            </div>
+          </div>
+          <div class="input-group">
+            <div class="input-label">
+              <span>Air Gap Distance</span>
+              <span class="unit">cm</span>
+            </div>
+            <div class="input-row">
+              <input type="range" min="1" max="100" step="0.5" value="15" id="gap-B" oninput="syncInput(this,'gap-num-B')">
+              <input type="number" class="input-number" min="1" max="100" step="0.5" value="15" id="gap-num-B" oninput="syncInput(this,'gap-B')">
+            </div>
+          </div>
+          <div class="input-group">
+            <div class="input-label">
+              <span>Operating Frequency</span>
+              <span class="unit">kHz</span>
+            </div>
+            <div class="input-row">
+              <input type="range" min="1" max="1000" step="1" value="85" id="freq-B" oninput="syncInput(this,'freq-num-B')">
+              <input type="number" class="input-number" min="1" max="1000" step="1" value="85" id="freq-num-B" oninput="syncInput(this,'freq-B')">
+            </div>
+          </div>
+          <div class="input-group">
+            <div class="input-label">
+              <span>Input Power</span>
+              <span class="unit">W</span>
+            </div>
+            <div class="input-row">
+              <input type="range" min="1" max="10000" step="10" value="1000" id="power-B" oninput="syncInput(this,'power-num-B')">
+              <input type="number" class="input-number" min="1" max="10000" step="1" value="1000" id="power-num-B" oninput="syncInput(this,'power-B')">
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparison toggle -->
+        <div class="compare-toggle">
+          <label class="toggle-switch" id="compare-switch">
+            <input type="checkbox" id="compare-checkbox" onchange="toggleCompare()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="compare-label">Comparison Mode</span>
+        </div>
+
+        <button class="export-btn" id="btn-export" onclick="exportPDF()">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1v10M4 7l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 13h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Export as PDF
+        </button>
+      </div>
+
+      <!-- Results Area -->
+      <div class="results-area" id="results-area">
+        <!-- Single mode results -->
+        <div id="single-results">
+          <div class="results-primary">
+            <div class="result-card highlight" id="card-efficiency">
+              <div class="result-label">⚡ System Efficiency</div>
+              <div class="result-value" id="res-efficiency">—<span class="result-unit">%</span></div>
+              <div class="gauge-container">
+                <div class="gauge-fill high" id="gauge-efficiency" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="result-card" id="card-coupling">
+              <div class="result-label">🔗 Coupling Coefficient</div>
+              <div class="result-value" id="res-coupling">—</div>
+              <div class="gauge-container">
+                <div class="gauge-fill high" id="gauge-coupling" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="result-card" id="card-power-out">
+              <div class="result-label">🔋 Power Output</div>
+              <div class="result-value" id="res-power-out">—<span class="result-unit">W</span></div>
+            </div>
+            <div class="result-card" id="card-power-loss">
+              <div class="result-label">🔥 Power Loss</div>
+              <div class="result-value" id="res-power-loss">—<span class="result-unit">W</span></div>
+            </div>
+          </div>
+
+          <div class="results-secondary">
+            <h3>Detailed Parameters</h3>
+            <div class="secondary-grid">
+              <div class="secondary-item">
+                <span class="label">Self-Inductance (L)</span>
+                <span class="value" id="res-inductance">—</span>
+              </div>
+              <div class="secondary-item">
+                <span class="label">Mutual Inductance (M)</span>
+                <span class="value" id="res-mutual">—</span>
+              </div>
+              <div class="secondary-item">
+                <span class="label">Quality Factor (Q)</span>
+                <span class="value" id="res-quality">—</span>
+              </div>
+              <div class="secondary-item">
+                <span class="label">Coil Resistance (R)</span>
+                <span class="value" id="res-resistance">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compare mode results (hidden by default) -->
+        <div id="compare-results" style="display:none">
+          <div class="compare-results">
+            <div class="compare-column" id="compare-col-a">
+              <h4>Configuration A</h4>
+              <div class="secondary-item"><span class="label">Efficiency</span><span class="value" id="cmp-eff-a">—</span></div>
+              <div class="secondary-item" style="margin-top:0.75rem"><span class="label">Coupling (k)</span><span class="value" id="cmp-k-a">—</span></div>
+              <div class="secondary-item" style="margin-top:0.75rem"><span class="label">Power Out</span><span class="value" id="cmp-pout-a">—</span></div>
+              <div class="secondary-item" style="margin-top:0.75rem"><span class="label">Power Loss</span><span class="value" id="cmp-ploss-a">—</span></div>
+              <div class="secondary-item" style="margin-top:0.75rem"><span class="label">Quality (Q)</span><span class="value" id="cmp-q-a">—</span></div>
+            </div>
+            <div class="compare-divider">
+              <span>Δ</span>
+              <div class="delta-value" id="delta-eff">—</div>
+              <div class="delta-value" id="delta-k">—</div>
+              <div class="delta-value" id="delta-pout">—</div>
+              <div class="delta-value" id="delta-ploss">—</div>
+              <div class="delta-value" id="delta-q">—</div>
+            </div>
+            <div class="compare-column" id="compare-col-b">
+              <h4>Configuration B</h4>
+              <div class="secondary-item"><span class="label">Efficiency</span><span class="value" id="cmp-eff-b">—</span></div>
+              <div class="secondary-item" style="margin-top:0.75rem"><span class="label">Coupling (k)</span><span class="value" id="cmp-k-b">—</span></div>
+              <div class="secondary-item" style="margin-top:0.75rem"><span class="label">Power Out</span><span class="value" id="cmp-pout-b">—</span></div>
+              <div class="secondary-item" style="margin-top:0.75rem"><span class="label">Power Loss</span><span class="value" id="cmp-ploss-b">—</span></div>
+              <div class="secondary-item" style="margin-top:0.75rem"><span class="label">Quality (Q)</span><span class="value" id="cmp-q-b">—</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coil Diagram -->
+        <div class="diagram-card" id="diagram-card">
+          <h3>Coil Configuration Visualization</h3>
+          <svg class="coil-svg" id="coil-diagram" viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <defs>
+              <linearGradient id="fieldGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#00b4ff" stop-opacity="0.6"/>
+                <stop offset="50%" stop-color="#00b4ff" stop-opacity="0.1"/>
+                <stop offset="100%" stop-color="#00b4ff" stop-opacity="0.6"/>
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <linearGradient id="coilGradTx" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#00b4ff"/>
+                <stop offset="100%" stop-color="#0066cc"/>
+              </linearGradient>
+              <linearGradient id="coilGradRx" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#00e5ff"/>
+                <stop offset="100%" stop-color="#0088cc"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Field lines (will be drawn by JS) -->
+            <g id="field-lines"></g>
+
+            <!-- Energy particles (animated by JS) -->
+            <g id="energy-particles"></g>
+
+            <!-- Transmitter coil -->
+            <g id="tx-coil" filter="url(#glow)">
+              <ellipse cx="160" cy="110" rx="12" ry="55" fill="none" stroke="url(#coilGradTx)" stroke-width="3"/>
+              <ellipse cx="155" cy="110" rx="12" ry="50" fill="none" stroke="url(#coilGradTx)" stroke-width="2" opacity="0.5"/>
+              <ellipse cx="165" cy="110" rx="12" ry="50" fill="none" stroke="url(#coilGradTx)" stroke-width="2" opacity="0.5"/>
+            </g>
+
+            <!-- Receiver coil -->
+            <g id="rx-coil" filter="url(#glow)">
+              <ellipse cx="440" cy="110" rx="12" ry="55" fill="none" stroke="url(#coilGradRx)" stroke-width="3"/>
+              <ellipse cx="435" cy="110" rx="12" ry="50" fill="none" stroke="url(#coilGradRx)" stroke-width="2" opacity="0.5"/>
+              <ellipse cx="445" cy="110" rx="12" ry="50" fill="none" stroke="url(#coilGradRx)" stroke-width="2" opacity="0.5"/>
+            </g>
+
+            <!-- Labels -->
+            <text x="160" y="185" text-anchor="middle" fill="#8892b0" font-size="12" font-family="Inter, sans-serif">Transmitter (Tx)</text>
+            <text x="440" y="185" text-anchor="middle" fill="#8892b0" font-size="12" font-family="Inter, sans-serif">Receiver (Rx)</text>
+            <text x="300" y="205" text-anchor="middle" fill="#495670" font-size="11" font-family="Inter, sans-serif" id="gap-label">Air Gap: 10 cm</text>
+
+            <!-- Air gap dimension line -->
+            <line x1="175" y1="195" x2="425" y2="195" stroke="#495670" stroke-width="1" stroke-dasharray="4,4" id="gap-line"/>
+            <line x1="175" y1="190" x2="175" y2="200" stroke="#495670" stroke-width="1"/>
+            <line x1="425" y1="190" x2="425" y2="200" stroke="#495670" stroke-width="1"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== ABOUT PAGE ==================== -->
+  <section id="page-about" class="page">
+    <div class="about-container">
+      <h1>About WPT Efficiency Calculator</h1>
+      <p class="lead">
+        A precision engineering tool for estimating wireless power transfer efficiency 
+        in resonant inductive coupling systems, built to support EV charging research 
+        and coil design optimization.
+      </p>
+
+      <div class="about-card" id="about-research">
+        <h2>📄 Research Foundation</h2>
+        <p>
+          WPT Efficiency Calculator implements electromagnetic models derived from 
+          the foundational research by Kurs et al. on wireless power transfer via 
+          strongly coupled magnetic resonances. The calculator uses the Neumann formula 
+          for mutual inductance between coaxial circular coils and Wheeler's approximation 
+          for self-inductance computation.
+        </p>
+        <p>
+          The system efficiency model is based on coupled magnetic resonance theory, 
+          where efficiency is determined by the coupling coefficient and quality factors 
+          of the transmitter and receiver coils operating at resonance.
+        </p>
+        <a class="paper-link" href="https://doi.org/10.1126/science.1143254" target="_blank" rel="noopener" id="btn-paper-about">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1L14 5v6l-6 4-6-4V5l6-4z" stroke="currentColor" stroke-width="1.5"/></svg>
+          Kurs et al. — Science, 2007 (DOI: 10.1126/science.1143254)
+        </a>
+      </div>
+
+      <div class="about-card" id="about-formulas">
+        <h2>🧮 Mathematical Models</h2>
+        <p>The following core formulas power the calculator:</p>
+        <div class="formula-block">
+          <strong>Self-Inductance (Wheeler):</strong><br>
+          L = μ₀ · N² · π · r / 2<br><br>
+          <strong>Mutual Inductance (Neumann):</strong><br>
+          M = (μ₀ · π · N² · r⁴) / (2 · (r² + d²)^(3/2))<br><br>
+          <strong>Coupling Coefficient:</strong><br>
+          k = M / √(L₁ · L₂) = r³ / (r² + d²)^(3/2)<br><br>
+          <strong>Quality Factor:</strong><br>
+          Q = ωL / R = 2πfL / R<br><br>
+          <strong>System Efficiency (maximum, at resonance):</strong><br>
+          η = k²·Q₁·Q₂ / (1 + √(1 + k²·Q₁·Q₂))²
+        </div>
+        <p>
+          <em>Note: The model assumes identical coaxial coils with copper wire (ρ = 1.68×10⁻⁸ Ω·m) 
+          and does not account for skin effect, proximity effect, or core losses. For high-frequency 
+          applications, actual efficiency may differ.</em>
+        </p>
+      </div>
+
+      <div class="about-card" id="about-author">
+        <h2>👤 About the Author</h2>
+        <p>
+          This tool was developed as part of ongoing research into optimizing wireless 
+          power transfer systems for electric vehicle charging infrastructure. The work 
+          focuses on maximizing coupling efficiency through coil geometry optimization 
+          and resonant frequency tuning.
+        </p>
+        <p>
+          The research contributes to the growing body of knowledge on contactless 
+          charging solutions for next-generation electric vehicles, with emphasis on 
+          practical design guidelines for coil systems operating at SAE J2954 
+          recommended frequencies (85 kHz).
+        </p>
+      </div>
+
+      <footer class="footer">
+        <p>© 2025 WPT Efficiency Calculator — Built for the research community</p>
+      </footer>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
