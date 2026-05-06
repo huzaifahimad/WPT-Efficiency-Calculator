@@ -437,47 +437,20 @@ function exportPDF() {
     return;
   }
 
-  // Load logo then generate PDF
-  const logoImg = new Image();
-  logoImg.crossOrigin = 'anonymous';
-  logoImg.onload = function() { generatePDFWithLogo(logoImg, btn, originalText); };
-  logoImg.onerror = function() { generatePDFWithLogo(null, btn, originalText); };
-  logoImg.src = 'logo.jpg';
-}
-
-function generatePDFWithLogo(logoImg, btn, originalText) {
   try {
     const doc = new window.jspdf.jsPDF('p', 'mm', 'a4');
     const pageW = doc.internal.pageSize.getWidth();
-    let y = 15;
+    let y = 20;
 
     // --- Header background ---
     doc.setFillColor(6, 11, 30);
-    doc.rect(0, 0, pageW, 48, 'F');
-
-    // --- Logo ---
-    if (logoImg) {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = logoImg.naturalWidth;
-        canvas.height = logoImg.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(logoImg, 0, 0);
-        const logoData = canvas.toDataURL('image/png');
-        doc.addImage(logoData, 'JPEG', pageW / 2 - 8, y - 2, 16, 16);
-        y += 18;
-      } catch (e) {
-        y += 5;
-      }
-    } else {
-      y += 5;
-    }
+    doc.rect(0, 0, pageW, 42, 'F');
 
     doc.setTextColor(0, 180, 255);
-    doc.setFontSize(20);
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.text('WPT Efficiency Calculator', pageW / 2, y, { align: 'center' });
-    y += 8;
+    y += 9;
 
     doc.setTextColor(136, 146, 176);
     doc.setFontSize(10);
