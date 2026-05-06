@@ -448,11 +448,7 @@ function buildPDF(logoImg, btn, originalText) {
   try {
     const doc = new window.jspdf.jsPDF('p', 'mm', 'a4');
     const pageW = doc.internal.pageSize.getWidth();
-    let y = 18;
-
-    // --- Header background ---
-    doc.setFillColor(6, 11, 30);
-    doc.rect(0, 0, pageW, 50, 'F');
+    let y = 20;
 
     // --- Logo in header ---
     if (logoImg) {
@@ -463,27 +459,33 @@ function buildPDF(logoImg, btn, originalText) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(logoImg, 0, 0);
         const logoData = canvas.toDataURL('image/png');
-        doc.addImage(logoData, 'PNG', 15, 8, 18, 18);
+        doc.addImage(logoData, 'PNG', 15, 10, 20, 20);
       } catch (e) { /* skip logo on error */ }
     }
 
-    doc.setTextColor(0, 180, 255);
-    doc.setFontSize(20);
+    doc.setTextColor(0, 100, 180);
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text('WPT Efficiency Calculator', logoImg ? 38 : 15, y, { align: 'left' });
+    doc.text('WPT Efficiency Calculator', logoImg ? 40 : 15, y);
     y += 8;
-    var textX = logoImg ? 38 : 15;
+    var textX = logoImg ? 40 : 15;
 
-    doc.setTextColor(136, 146, 176);
+    doc.setTextColor(100, 100, 100);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.text('Wireless Power Transfer - Engineering Report', textX, y);
     y += 6;
 
-    doc.setTextColor(73, 86, 112);
+    doc.setTextColor(140, 140, 140);
     doc.setFontSize(8);
     doc.text('Generated on ' + new Date().toLocaleString(), textX, y);
-    y += 14;
+    y += 4;
+
+    // Header separator line
+    doc.setDrawColor(0, 140, 220);
+    doc.setLineWidth(0.8);
+    doc.line(15, y, pageW - 15, y);
+    y += 10;
 
     // --- Get current calculation data ---
     const params = getParams(compareMode ? activeConfig : 'A');
@@ -491,17 +493,15 @@ function buildPDF(logoImg, btn, originalText) {
 
     // --- Section helper ---
     function drawSection(title) {
-      doc.setFillColor(255, 255, 255);
-      doc.rect(0, y - 5, pageW, 9, 'F');
-      doc.setTextColor(6, 11, 30);
-      doc.setFontSize(12);
+      doc.setTextColor(0, 100, 180);
+      doc.setFontSize(13);
       doc.setFont('helvetica', 'bold');
-      doc.text(title, 18, y);
-      y += 6;
-      doc.setDrawColor(0, 180, 255);
-      doc.setLineWidth(0.5);
+      doc.text(title, 15, y);
+      y += 2;
+      doc.setDrawColor(0, 140, 220);
+      doc.setLineWidth(0.4);
       doc.line(15, y, pageW - 15, y);
-      y += 6;
+      y += 7;
     }
 
     function drawRows(data) {
