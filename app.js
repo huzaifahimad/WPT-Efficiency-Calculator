@@ -491,15 +491,17 @@ function buildPDF(logoImg, btn, originalText) {
 
     // --- Section helper ---
     function drawSection(title) {
-      doc.setTextColor(0, 180, 255);
-      doc.setFontSize(13);
+      doc.setFillColor(255, 255, 255);
+      doc.rect(15, y - 5, pageW - 30, 9, 'F');
+      doc.setTextColor(6, 11, 30);
+      doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text(title, 15, y);
-      y += 2;
+      doc.text(title, 18, y);
+      y += 6;
       doc.setDrawColor(0, 180, 255);
       doc.setLineWidth(0.5);
       doc.line(15, y, pageW - 15, y);
-      y += 8;
+      y += 6;
     }
 
     function drawRows(data) {
