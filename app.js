@@ -492,7 +492,7 @@ function buildPDF(logoImg, btn, originalText) {
     // --- Section helper ---
     function drawSection(title) {
       doc.setFillColor(255, 255, 255);
-      doc.rect(15, y - 5, pageW - 30, 9, 'F');
+      doc.rect(0, y - 5, pageW, 9, 'F');
       doc.setTextColor(6, 11, 30);
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
