@@ -633,7 +633,7 @@ function buildPDF(logoImg, btn, originalText) {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(120, 120, 120);
     doc.text('WPT Efficiency Calculator by Huzaifa Himad', 15, pageH - 12);
-    doc.text('(c) 2025-2026 - Built for the research community', 15, pageH - 8);
+    doc.text('(c) 2026 - Built for the research community', 15, pageH - 8);
     doc.text('DOI: 10.5281/zenodo.19549898', pageW - 15, pageH - 12, { align: 'right' });
 
     // Save
