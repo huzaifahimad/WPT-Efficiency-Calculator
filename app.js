@@ -442,7 +442,7 @@ function exportPDF() {
   logoImg.crossOrigin = 'anonymous';
   logoImg.onload = function() { generatePDFWithLogo(logoImg, btn, originalText); };
   logoImg.onerror = function() { generatePDFWithLogo(null, btn, originalText); };
-  logoImg.src = 'logo.png';
+  logoImg.src = 'logo.jpg';
 }
 
 function generatePDFWithLogo(logoImg, btn, originalText) {
@@ -464,7 +464,7 @@ function generatePDFWithLogo(logoImg, btn, originalText) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(logoImg, 0, 0);
         const logoData = canvas.toDataURL('image/png');
-        doc.addImage(logoData, 'PNG', pageW / 2 - 8, y - 2, 16, 16);
+        doc.addImage(logoData, 'JPEG', pageW / 2 - 8, y - 2, 16, 16);
         y += 18;
       } catch (e) {
         y += 5;
