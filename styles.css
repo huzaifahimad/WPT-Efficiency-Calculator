@@ -85,6 +85,13 @@ a:hover { color: var(--accent-bright); }
 
 .nav-logo span { color: var(--accent); }
 
+.nav-logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
 .nav-links {
   display: flex;
   gap: 0.25rem;

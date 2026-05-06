@@ -426,199 +426,178 @@ function updateDiagram(params, results) {
 function exportPDF() {
   const btn = document.getElementById('btn-export');
   const originalText = btn.innerHTML;
-  btn.innerHTML = '⏳ Generating PDF...';
+  btn.innerHTML = '&#x23F3; Generating PDF...';
   btn.disabled = true;
 
-  try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageW = doc.internal.pageSize.getWidth();
-    let y = 20;
+  // Check if jsPDF loaded
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert('PDF library failed to load. Please refresh the page and try again.');
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    return;
+  }
 
-    // --- Header ---
+  // Load logo then generate PDF
+  const logoImg = new Image();
+  logoImg.crossOrigin = 'anonymous';
+  logoImg.onload = function() { generatePDFWithLogo(logoImg, btn, originalText); };
+  logoImg.onerror = function() { generatePDFWithLogo(null, btn, originalText); };
+  logoImg.src = 'logo.png';
+}
+
+function generatePDFWithLogo(logoImg, btn, originalText) {
+  try {
+    const doc = new window.jspdf.jsPDF('p', 'mm', 'a4');
+    const pageW = doc.internal.pageSize.getWidth();
+    let y = 15;
+
+    // --- Header background ---
     doc.setFillColor(6, 11, 30);
-    doc.rect(0, 0, pageW, 45, 'F');
+    doc.rect(0, 0, pageW, 48, 'F');
+
+    // --- Logo ---
+    if (logoImg) {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = logoImg.naturalWidth;
+        canvas.height = logoImg.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(logoImg, 0, 0);
+        const logoData = canvas.toDataURL('image/png');
+        doc.addImage(logoData, 'PNG', pageW / 2 - 8, y - 2, 16, 16);
+        y += 18;
+      } catch (e) {
+        y += 5;
+      }
+    } else {
+      y += 5;
+    }
 
     doc.setTextColor(0, 180, 255);
-    doc.setFontSize(22);
+    doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('⚡ WPT Efficiency Calculator', pageW / 2, y, { align: 'center' });
-    y += 10;
+    doc.text('WPT Efficiency Calculator', pageW / 2, y, { align: 'center' });
+    y += 8;
 
     doc.setTextColor(136, 146, 176);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text('Wireless Power Transfer — Engineering Report', pageW / 2, y, { align: 'center' });
-    y += 8;
+    doc.text('Wireless Power Transfer - Engineering Report', pageW / 2, y, { align: 'center' });
+    y += 7;
 
     doc.setTextColor(73, 86, 112);
     doc.setFontSize(8);
     doc.text('Generated on ' + new Date().toLocaleString(), pageW / 2, y, { align: 'center' });
-    y += 15;
+    y += 12;
 
     // --- Get current calculation data ---
     const params = getParams(compareMode ? activeConfig : 'A');
     const results = WPT.calculate(params);
 
-    // --- Input Parameters Section ---
-    doc.setTextColor(0, 180, 255);
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Input Parameters', 15, y);
-    y += 2;
-    doc.setDrawColor(0, 180, 255);
-    doc.setLineWidth(0.5);
-    doc.line(15, y, pageW - 15, y);
-    y += 8;
+    // --- Section helper ---
+    function drawSection(title) {
+      doc.setTextColor(0, 180, 255);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, 15, y);
+      y += 2;
+      doc.setDrawColor(0, 180, 255);
+      doc.setLineWidth(0.5);
+      doc.line(15, y, pageW - 15, y);
+      y += 8;
+    }
 
-    const paramData = [
+    function drawRows(data) {
+      doc.setFontSize(10);
+      data.forEach(function(row) {
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text(row[0], 20, y);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 30, 30);
+        doc.text(String(row[1]), pageW - 20, y, { align: 'right' });
+        y += 7;
+      });
+      y += 5;
+    }
+
+    // --- Input Parameters ---
+    drawSection('Input Parameters');
+    drawRows([
       ['Coil Radius', params.radius + ' cm'],
-      ['Number of Turns', params.turns.toString()],
+      ['Number of Turns', String(params.turns)],
       ['Air Gap Distance', params.airGap + ' cm'],
       ['Operating Frequency', params.frequency + ' kHz'],
       ['Input Power', params.inputPower + ' W']
-    ];
+    ]);
 
-    doc.setFontSize(10);
-    paramData.forEach(([label, value]) => {
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100, 100, 100);
-      doc.text(label, 20, y);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(30, 30, 30);
-      doc.text(value, pageW - 20, y, { align: 'right' });
-      y += 7;
-    });
-
-    y += 5;
-
-    // --- Primary Results Section ---
-    doc.setTextColor(0, 180, 255);
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Results — Key Metrics', 15, y);
-    y += 2;
-    doc.line(15, y, pageW - 15, y);
-    y += 8;
-
-    const effPct = (results.efficiency * 100).toFixed(2);
-    const resultData = [
+    // --- Primary Results ---
+    drawSection('Results - Key Metrics');
+    var effPct = (results.efficiency * 100).toFixed(2);
+    drawRows([
       ['System Efficiency', effPct + ' %'],
       ['Coupling Coefficient (k)', results.couplingCoefficient.toFixed(6)],
       ['Power Output', results.powerOutput.toFixed(2) + ' W'],
       ['Power Loss', results.powerLoss.toFixed(2) + ' W']
-    ];
+    ]);
 
-    doc.setFontSize(10);
-    resultData.forEach(([label, value]) => {
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100, 100, 100);
-      doc.text(label, 20, y);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(30, 30, 30);
-      doc.text(value, pageW - 20, y, { align: 'right' });
-      y += 7;
-    });
-
-    y += 5;
-
-    // --- Detailed Parameters Section ---
-    doc.setTextColor(0, 180, 255);
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Detailed Parameters', 15, y);
-    y += 2;
-    doc.line(15, y, pageW - 15, y);
-    y += 8;
-
-    const detailData = [
+    // --- Detailed Parameters ---
+    drawSection('Detailed Parameters');
+    drawRows([
       ['Self-Inductance (L)', formatSI(results.selfInductance)],
       ['Mutual Inductance (M)', formatSI(results.mutualInductance)],
       ['Quality Factor (Q)', results.qualityFactor.toFixed(1)],
       ['Coil Resistance (R)', formatResistance(results.coilResistance)]
-    ];
-
-    doc.setFontSize(10);
-    detailData.forEach(([label, value]) => {
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100, 100, 100);
-      doc.text(label, 20, y);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(30, 30, 30);
-      doc.text(value, pageW - 20, y, { align: 'right' });
-      y += 7;
-    });
-
-    y += 5;
+    ]);
 
     // --- Efficiency Assessment ---
-    doc.setTextColor(0, 180, 255);
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Efficiency Assessment', 15, y);
-    y += 2;
-    doc.line(15, y, pageW - 15, y);
-    y += 8;
+    drawSection('Efficiency Assessment');
 
-    const eta = results.efficiency;
-    let assessment, assessColor;
+    var eta = results.efficiency;
+    var assessment, assessColor;
     if (eta >= 0.7) {
-      assessment = 'HIGH — Excellent coupling. Suitable for practical EV charging applications.';
+      assessment = 'HIGH - Excellent coupling. Suitable for practical EV charging.';
       assessColor = [0, 180, 80];
     } else if (eta >= 0.4) {
-      assessment = 'MEDIUM — Moderate coupling. Consider reducing air gap or increasing coil size.';
+      assessment = 'MEDIUM - Moderate coupling. Consider reducing air gap or increasing coil size.';
       assessColor = [200, 160, 0];
     } else {
-      assessment = 'LOW — Weak coupling. Significant geometry optimization needed.';
+      assessment = 'LOW - Weak coupling. Significant geometry optimization needed.';
       assessColor = [220, 60, 60];
     }
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...assessColor);
+    doc.setTextColor(assessColor[0], assessColor[1], assessColor[2]);
     doc.text(assessment, 20, y);
     y += 12;
 
     // --- Formulas Used ---
-    doc.setTextColor(0, 180, 255);
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Mathematical Models Used', 15, y);
-    y += 2;
-    doc.line(15, y, pageW - 15, y);
-    y += 8;
-
+    drawSection('Mathematical Models Used');
     doc.setFontSize(8.5);
     doc.setFont('courier', 'normal');
     doc.setTextColor(60, 60, 60);
-    const formulas = [
-      'Self-Inductance (Wheeler):  L = μ₀ · N² · π · r / 2',
-      'Mutual Inductance (Neumann): M = (μ₀ · π · N² · r⁴) / (2 · (r² + d²)^(3/2))',
-      'Coupling Coefficient:       k = r³ / (r² + d²)^(3/2)',
-      'Quality Factor:             Q = 2πfL / R',
-      'System Efficiency:          η = k²·Q²  / (1 + √(1 + k²·Q²))²'
+    var formulas = [
+      'Self-Inductance (Wheeler):   L = u0 * N^2 * pi * r / 2',
+      'Mutual Inductance (Neumann): M = (u0 * pi * N^2 * r^4) / (2*(r^2+d^2)^1.5)',
+      'Coupling Coefficient:        k = r^3 / (r^2 + d^2)^1.5',
+      'Quality Factor:              Q = 2*pi*f*L / R',
+      'System Efficiency:           n = k^2*Q^2 / (1 + sqrt(1 + k^2*Q^2))^2'
     ];
-    formulas.forEach(f => {
+    formulas.forEach(function(f) {
       doc.text(f, 20, y);
       y += 5.5;
     });
-
     y += 5;
 
-    // --- Comparison Mode (if active) ---
+    // --- Comparison Mode ---
     if (compareMode) {
-      const paramsA = getParams('A');
-      const paramsB = getParams('B');
-      const resA = WPT.calculate(paramsA);
-      const resB = WPT.calculate(paramsB);
+      var paramsA = getParams('A');
+      var paramsB = getParams('B');
+      var resA = WPT.calculate(paramsA);
+      var resB = WPT.calculate(paramsB);
 
-      doc.setTextColor(0, 180, 255);
-      doc.setFontSize(13);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Comparison: Config A vs Config B', 15, y);
-      y += 2;
-      doc.line(15, y, pageW - 15, y);
-      y += 8;
+      drawSection('Comparison: Config A vs Config B');
 
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
@@ -629,7 +608,7 @@ function exportPDF() {
       doc.text('Delta', pageW - 20, y, { align: 'right' });
       y += 6;
 
-      const cmpRows = [
+      var cmpRows = [
         ['Efficiency', (resA.efficiency*100).toFixed(2)+'%', (resB.efficiency*100).toFixed(2)+'%', ((resB.efficiency-resA.efficiency)*100).toFixed(2)+'%'],
         ['Coupling (k)', resA.couplingCoefficient.toFixed(6), resB.couplingCoefficient.toFixed(6), (resB.couplingCoefficient-resA.couplingCoefficient).toFixed(6)],
         ['Power Out', resA.powerOutput.toFixed(2)+' W', resB.powerOutput.toFixed(2)+' W', (resB.powerOutput-resA.powerOutput).toFixed(2)+' W'],
@@ -638,17 +617,17 @@ function exportPDF() {
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(50, 50, 50);
-      cmpRows.forEach(([metric, a, b, delta]) => {
-        doc.text(metric, 20, y);
-        doc.text(a, 90, y, { align: 'center' });
-        doc.text(b, 140, y, { align: 'center' });
-        doc.text(delta, pageW - 20, y, { align: 'right' });
+      cmpRows.forEach(function(row) {
+        doc.text(row[0], 20, y);
+        doc.text(row[1], 90, y, { align: 'center' });
+        doc.text(row[2], 140, y, { align: 'center' });
+        doc.text(row[3], pageW - 20, y, { align: 'right' });
         y += 6;
       });
     }
 
     // --- Footer ---
-    const pageH = doc.internal.pageSize.getHeight();
+    var pageH = doc.internal.pageSize.getHeight();
     doc.setDrawColor(0, 180, 255);
     doc.setLineWidth(0.3);
     doc.line(15, pageH - 18, pageW - 15, pageH - 18);
@@ -657,16 +636,16 @@ function exportPDF() {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(120, 120, 120);
     doc.text('WPT Efficiency Calculator by Huzaifa Himad', 15, pageH - 12);
-    doc.text('© 2025–2026 — Built for the research community', 15, pageH - 8);
+    doc.text('(c) 2025-2026 - Built for the research community', 15, pageH - 8);
     doc.text('DOI: 10.5281/zenodo.19549898', pageW - 15, pageH - 12, { align: 'right' });
 
-    // Save the PDF
-    const timestamp = new Date().toISOString().slice(0, 10);
+    // Save
+    var timestamp = new Date().toISOString().slice(0, 10);
     doc.save('WPT_Report_' + timestamp + '.pdf');
 
   } catch (err) {
     console.error('PDF generation failed:', err);
-    alert('PDF generation failed. Please check your internet connection (required for jsPDF library) and try again.');
+    alert('PDF generation failed: ' + err.message);
   } finally {
     btn.innerHTML = originalText;
     btn.disabled = false;
