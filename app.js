@@ -437,31 +437,53 @@ function exportPDF() {
     return;
   }
 
+  // Load logo then generate PDF
+  const logoImg = new Image();
+  logoImg.onload = function() { buildPDF(logoImg, btn, originalText); };
+  logoImg.onerror = function() { buildPDF(null, btn, originalText); };
+  logoImg.src = 'logo-circle.png';
+}
+
+function buildPDF(logoImg, btn, originalText) {
   try {
     const doc = new window.jspdf.jsPDF('p', 'mm', 'a4');
     const pageW = doc.internal.pageSize.getWidth();
-    let y = 20;
+    let y = 18;
 
     // --- Header background ---
     doc.setFillColor(6, 11, 30);
-    doc.rect(0, 0, pageW, 42, 'F');
+    doc.rect(0, 0, pageW, 50, 'F');
+
+    // --- Logo in header ---
+    if (logoImg) {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = logoImg.naturalWidth;
+        canvas.height = logoImg.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(logoImg, 0, 0);
+        const logoData = canvas.toDataURL('image/png');
+        doc.addImage(logoData, 'PNG', 15, 8, 18, 18);
+      } catch (e) { /* skip logo on error */ }
+    }
 
     doc.setTextColor(0, 180, 255);
-    doc.setFontSize(22);
+    doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('WPT Efficiency Calculator', pageW / 2, y, { align: 'center' });
-    y += 9;
+    doc.text('WPT Efficiency Calculator', logoImg ? 38 : 15, y, { align: 'left' });
+    y += 8;
+    var textX = logoImg ? 38 : 15;
 
     doc.setTextColor(136, 146, 176);
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text('Wireless Power Transfer - Engineering Report', pageW / 2, y, { align: 'center' });
-    y += 7;
+    doc.text('Wireless Power Transfer - Engineering Report', textX, y);
+    y += 6;
 
     doc.setTextColor(73, 86, 112);
     doc.setFontSize(8);
-    doc.text('Generated on ' + new Date().toLocaleString(), pageW / 2, y, { align: 'center' });
-    y += 12;
+    doc.text('Generated on ' + new Date().toLocaleString(), textX, y);
+    y += 14;
 
     // --- Get current calculation data ---
     const params = getParams(compareMode ? activeConfig : 'A');
